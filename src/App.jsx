@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 function App() {
   const [reports, setReports] = useState([]);
@@ -7,31 +7,28 @@ function App() {
     lga: "",
     street: "",
     description: "",
-    photo: null,
+    photo: null
   });
 
-  // Fetch existing reports from backend
+  const API_URL = "http://localhost:5000/api/reports"; // replace with deployed backend if needed
+
   useEffect(() => {
-    fetch("http://localhost:5000/api/reports")
-      .then((res) => res.json())
-      .then((data) => setReports(data))
-      .catch((err) => console.error("Error fetching reports:", err));
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setReports(data))
+      .catch(err => console.error(err));
   }, []);
 
-  // Handle input changes
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Handle photo file selection
-  const handlePhotoChange = (e) => {
+  const handleFileChange = (e) => {
     setForm({ ...form, photo: e.target.files[0] });
   };
 
-  // Submit the form
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const formData = new FormData();
     formData.append("state", form.state);
     formData.append("lga", form.lga);
@@ -40,16 +37,12 @@ function App() {
     if (form.photo) formData.append("photo", form.photo);
 
     try {
-      const res = await fetch("http://localhost:5000/api/reports", {
-        method: "POST",
-        body: formData,
-      });
-
+      const res = await fetch(API_URL, { method: "POST", body: formData });
       const newReport = await res.json();
-      setReports([newReport, ...reports]); // Add new report to top
+      setReports([newReport, ...reports]);
       setForm({ state: "", lga: "", street: "", description: "", photo: null });
     } catch (err) {
-      console.error("Error submitting report:", err);
+      console.error("Submit error:", err);
     }
   };
 
@@ -57,58 +50,19 @@ function App() {
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
       <h1>🚧 Road Condition Reports</h1>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} style={{ marginBottom: "2rem" }}>
-        <input
-          name="state"
-          value={form.state}
-          onChange={handleChange}
-          placeholder="State"
-          required
-          style={{ marginRight: "0.5rem" }}
-        />
-        <input
-          name="lga"
-          value={form.lga}
-          onChange={handleChange}
-          placeholder="LGA"
-          required
-          style={{ marginRight: "0.5rem" }}
-        />
-        <input
-          name="street"
-          value={form.street}
-          onChange={handleChange}
-          placeholder="Street"
-          required
-          style={{ marginRight: "0.5rem" }}
-        />
-        <input
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          placeholder="Description"
-          required
-          style={{ marginRight: "0.5rem" }}
-        />
-        <input type="file" onChange={handlePhotoChange} style={{ marginRight: "0.5rem" }} />
+      <form onSubmit={handleSubmit} style={{ marginBottom: "1rem" }}>
+        <input name="state" value={form.state} onChange={handleChange} placeholder="State" required />
+        <input name="lga" value={form.lga} onChange={handleChange} placeholder="LGA" required />
+        <input name="street" value={form.street} onChange={handleChange} placeholder="Street" required />
+        <input name="description" value={form.description} onChange={handleChange} placeholder="Description" required />
+        <input type="file" onChange={handleFileChange} />
         <button type="submit">Submit Report</button>
       </form>
 
-      {/* Reports list */}
       <ul>
-        {Array.isArray(reports) && reports.map((r) => (
-          <li key={r.id} style={{ marginBottom: "1rem" }}>
-            <strong>{r.state} - {r.lga} - {r.street}</strong>
-            <p>{r.description}</p>
-            {r.photo && (
-              <img
-                src={r.photo}
-                alt="report"
-                style={{ width: "200px", marginTop: "0.5rem" }}
-              />
-            )}
-            <hr />
+        {Array.isArray(reports) && reports.map(r => (
+          <li key={r.id}>
+            {r.state} - {r.lga} - {r.street}: {r.description} {r.photo && <img src={r.photo} alt="report" width={100} />}
           </li>
         ))}
       </ul>
